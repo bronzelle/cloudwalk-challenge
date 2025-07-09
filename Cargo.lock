@@ -1077,6 +1077,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "blockchain-indexer"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "alloy-provider",
+ "alloy-rpc-types-eth",
+ "anyhow",
+ "dotenvy",
+ "futures-util",
+ "tokio",
+]
+
+[[package]]
 name = "blst"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1492,18 +1505,6 @@ checksum = "778e2ac28f6c47af28e4907f13ffd1e1ddbd400980a9abd7c8df189bf578a5ad"
 dependencies = [
  "libc",
  "windows-sys 0.60.2",
-]
-
-[[package]]
-name = "eth_client"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "alloy-provider",
- "alloy-rpc-types-eth",
- "anyhow",
- "futures-util",
- "tokio",
 ]
 
 [[package]]
@@ -2067,16 +2068,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.104",
-]
-
-[[package]]
-name = "indexer"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dotenvy",
- "eth_client",
- "tokio",
 ]
 
 [[package]]

@@ -1,3 +1,13 @@
-[workspace]
-members = ["indexer", "eth_client"]
-resolver = "2"
+[package]
+name = "blockchain-indexer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+alloy = { version = "1.0.19", features = ["full"] }
+alloy-provider = { version = "1.0.19" }
+alloy-rpc-types-eth = "1.0.19"
+anyhow = "1.0.98"
+dotenvy = "0.15.7"
+futures-util = "0.3.31"
+tokio = { version = "1.46.1", features = ["full"] }
