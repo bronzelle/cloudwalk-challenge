@@ -2,6 +2,7 @@ use std::env;
 
 pub mod eth_client;
 pub mod indexer;
+pub mod types;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

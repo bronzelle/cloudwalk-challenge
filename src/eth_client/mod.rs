@@ -1,16 +1,11 @@
-use alloy::primitives::B256;
 use alloy_provider::{DynProvider, Provider, ProviderBuilder, WsConnect};
-use alloy_rpc_types_eth::{BlockTransactions, Filter, Header, Log};
+use alloy_rpc_types_eth::{BlockTransactions, Filter, Header};
 use futures_util::StreamExt;
 use tokio::sync::mpsc::{self, Receiver};
 
-pub struct Info {
-    pub header: Header,
-    pub logs: anyhow::Result<Vec<Log>>,
-    pub transactions: anyhow::Result<Vec<B256>>,
-}
+use crate::types::Info;
 
-pub async fn connect(rpc: impl Into<String>) -> anyhow::Result<Receiver<Info>> {
+pub async fn connect(rpc: impl Into<String>) -> anyhow::Result<Receiver<anyhow::Result<Info>>> {
     let provider = ProviderBuilder::new()
         .connect_ws(WsConnect::new(rpc))
         .await?
@@ -38,36 +33,31 @@ pub async fn connect(rpc: impl Into<String>) -> anyhow::Result<Receiver<Info>> {
     Ok(receiver)
 }
 
-async fn get_block_info(provider: &DynProvider, header: Header) -> Info {
+async fn get_block_info(provider: &DynProvider, header: Header) -> anyhow::Result<Info> {
     let filter = Filter::new().at_block_hash(header.hash);
     let (block_result, logs_result) = tokio::join!(
         provider.get_block_by_hash(header.hash).hashes(),
         provider.get_logs(&filter)
     );
 
-    if let Err(e) = &block_result {
-        eprintln!("Failed to get block by hash {}: {e}", header.hash);
-    }
-    if let Err(e) = &logs_result {
-        eprintln!("Failed to get logs for block {}: {e}", header.hash);
-    }
+    let (block, logs) = (
+        block_result?.ok_or_else(|| anyhow::anyhow!("Block not found"))?,
+        logs_result?,
+    );
 
-    let block = block_result
-        .map_err(anyhow::Error::from)
-        .and_then(|block| block.ok_or_else(|| anyhow::anyhow!("Block not found")));
-
-    let logs = logs_result.map_err(anyhow::Error::from);
-
-    let transactions = block.and_then(|block| match block.transactions {
+    let transactions = match block.transactions {
         BlockTransactions::Hashes(transactions) => Ok(transactions),
         _ => Err(anyhow::anyhow!("Block transactions are not full")),
-    });
+    }?;
 
-    Info {
-        header,
-        logs,
-        transactions,
-    }
+    Ok(Info {
+        block: header.into(),
+        logs: logs.iter().map(|log| log.clone().into()).collect(),
+        transactions: transactions
+            .iter()
+            .map(|hash| hash.clone().into())
+            .collect(),
+    })
 }
 
 #[cfg(test)]
@@ -97,9 +87,11 @@ mod tests {
             hash,
             ..Default::default()
         };
-        let info = get_block_info(&provider, header).await;
-        assert_eq!(info.header.hash, hash);
-        assert!(info.logs.is_ok());
-        assert!(info.transactions.is_ok());
+        let info = get_block_info(&provider, header)
+            .await
+            .expect("Block info retrieval failed");
+        assert_eq!(info.block.hash, hash);
+        assert_eq!(info.logs.len(), 816);
+        assert_eq!(info.transactions.len(), 311);
     }
 }
