@@ -16,9 +16,9 @@ This file tracks the progress of the blockchain indexer project.
 
 ## Database
 
-- [ ] Design the database schema (tables for blocks, transactions, logs).
-- [ ] Choose and integrate Diesel using SQLite as the database.
-- [ ] Implement functions to insert data into the database.
+- [x] Design the database schema (tables for blocks, transactions, logs).
+- [x] Choose and integrate Diesel using SQLite as the database.
+- [x] Implement functions to insert data into the database.
 
 ## API (Bonus)
 
