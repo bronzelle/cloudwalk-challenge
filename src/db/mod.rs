@@ -155,6 +155,7 @@ impl Database {
         Ok(())
     }
 
+    #[cfg(test)]
     fn get_conn(&mut self) -> &mut SqliteConnection {
         &mut self.conn
     }

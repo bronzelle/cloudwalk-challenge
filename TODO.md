@@ -10,9 +10,9 @@ This file tracks the progress of the blockchain indexer project.
 - [x] For each new block, fetch all associated logs.
 - [x] Extract transactions from each block.
 - [ ] Extract receipts from each transaction.
-- [ ] Store block information in a database.
-- [ ] Store transaction information in a database.
-- [ ] Store log information in a database.
+- [x] Store block information in a database.
+- [x] Store transaction information in a database.
+- [x] Store log information in a database.
 
 ## Database
 
@@ -36,7 +36,8 @@ This file tracks the progress of the blockchain indexer project.
 ## Testing
 
 - Add unit tests for individual functions.
-  - [x] `eth_client`: test retrieving information from a block
+  - [x] `eth_client`: test retrieving information from a block.
+  - [x] `db`: test inserting data into the database and querying it.
 - [ ] Add integration tests for the end-to-end flow.
 
 ## Code Quality & Refinements
