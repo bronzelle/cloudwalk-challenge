@@ -63,6 +63,7 @@ impl TryFrom<Log> for types::Log {
                 .map_err(|_| anyhow::anyhow!("Invalid address"))?,
             topics: Default::default(),
             data: log.data,
+            block_number: log.block_number as u64,
         })
     }
 }

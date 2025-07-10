@@ -29,15 +29,16 @@ This file tracks the progress of the blockchain indexer project.
 - [ ] Retrieve `token_balances` for ERC-20/721 holdings.
 - [ ] Create a `token_balances` table for ERC-20/721 holdings.
 - [ ] Design and implement a simple HTTP API to query the indexed data.
-- [ ] Add endpoints to get a block by number or hash.
-- [ ] Add endpoints to get a transaction by hash.
-- [ ] Add endpoints to get logs with filtering options.
+  - [x] Add endpoints to get a block by number or hash.
+  - [x] Add endpoints to get a transaction by hash.
+  - [ ] Add endpoints to get logs with filtering options.
 
 ## Testing
 
-- Add unit tests for individual functions.
+- [ ] Add unit tests for individual functions.
   - [x] `eth_client`: test retrieving information from a block.
   - [x] `db`: test inserting data into the database and querying it.
+  - [ ] `api`: test the API endpoints.
 - [ ] Add integration tests for the end-to-end flow.
 
 ## Code Quality & Refinements

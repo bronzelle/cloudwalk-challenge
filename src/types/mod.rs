@@ -1,11 +1,13 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Info {
     pub block: Block,
     pub transactions: Vec<Transaction>,
     pub logs: Vec<Log>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Block {
     pub number: u64,
     pub hash: [u8; 32],
@@ -16,13 +18,14 @@ pub struct Block {
     pub base_fee_per_gas: Option<u64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Transaction {
     pub hash: [u8; 32],
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Log {
+    pub block_number: u64,
     pub transaction_hash: Option<[u8; 32]>,
     pub log_index: Option<u64>,
     pub address: [u8; 20],
@@ -63,6 +66,7 @@ impl From<alloy_rpc_types_eth::Log> for Log {
             address: log.inner.address.into(),
             topics,
             data: log.inner.data.data.clone().into(),
+            block_number: log.block_number.unwrap_or_default(),
         }
     }
 }

@@ -1,5 +1,6 @@
 use std::env;
 
+pub mod api;
 pub mod db;
 pub mod eth_client;
 pub mod indexer;

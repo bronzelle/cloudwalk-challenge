@@ -20,13 +20,10 @@ impl Database {
         Ok(Self { conn })
     }
 
-    pub fn query_block_by_hash(&mut self, hash: &[u8]) -> anyhow::Result<Info> {
-        let conn = &mut self.conn;
-        let db_block: DbBlock = schema::blocks::table
-            .filter(schema::blocks::hash.eq(hash))
-            .select(DbBlock::as_select())
-            .first(conn)?;
-
+    fn get_block_info(
+        conn: &mut SqliteConnection,
+        db_block: DbBlock,
+    ) -> Result<Info, anyhow::Error> {
         let db_transactions: Vec<DbTransaction> = schema::transactions::table
             .filter(
                 schema::transactions::block_number.eq(db_block
@@ -44,11 +41,7 @@ impl Database {
             )
             .load::<models::Log>(conn)?;
 
-        let log_ids: Vec<i32> = db_logs
-            .iter()
-            .map(|log| log.id)
-            .collect::<Option<Vec<_>>>()
-            .ok_or_else(|| anyhow::anyhow!("Missing log ids"))?;
+        let log_ids: Vec<i32> = db_logs.iter().filter_map(|log| log.id).collect();
 
         let db_log_topics: Vec<models::LogTopic> = schema::log_topics::table
             .filter(schema::log_topics::log_id.eq_any(log_ids))
@@ -88,6 +81,99 @@ impl Database {
             logs,
         })
     }
+
+    pub fn query_block_by_number(&mut self, number: u64) -> anyhow::Result<Info> {
+        let conn = &mut self.conn;
+        let db_block: DbBlock = schema::blocks::table
+            .filter(schema::blocks::number.eq(number as i64))
+            .select(DbBlock::as_select())
+            .first(conn)?;
+
+        Self::get_block_info(conn, db_block)
+    }
+
+    pub fn query_block_by_hash(&mut self, hash: &[u8]) -> anyhow::Result<Info> {
+        let conn = &mut self.conn;
+        let db_block: DbBlock = schema::blocks::table
+            .filter(schema::blocks::hash.eq(hash))
+            .select(DbBlock::as_select())
+            .first(conn)?;
+
+        Self::get_block_info(conn, db_block)
+    }
+
+    pub fn query_transaction_by_hash(&mut self, hash: &[u8]) -> anyhow::Result<types::Transaction> {
+        let conn = &mut self.conn;
+        let db_tx: DbTransaction = schema::transactions::table
+            .filter(schema::transactions::hash.eq(hash))
+            .select(DbTransaction::as_select())
+            .first(conn)?;
+        db_tx.try_into()
+    }
+
+    // pub fn get_logs_filtered(
+    //     &mut self,
+    //     block_hash: Option<&[u8]>,
+    //     transaction_hash: Option<&[u8]>,
+    //     topics: Vec<&[u8]>,
+    // ) -> anyhow::Result<Vec<types::Log>> {
+    //     let conn = &mut self.conn;
+    //     let mut query = schema::logs::table.into_boxed::<diesel::sqlite::Sqlite>();
+
+    //     if let Some(b_hash) = block_hash {
+    //         let db_block: DbBlock = schema::blocks::table
+    //             .filter(schema::blocks::hash.eq(b_hash))
+    //             .select(DbBlock::as_select())
+    //             .first(conn)?;
+    //         query = query
+    //             .filter(schema::logs::block_number.eq(db_block.number.unwrap_or_default() as i64));
+    //     }
+
+    //     if let Some(tx_hash) = transaction_hash {
+    //         query = query.filter(schema::logs::transaction_hash.eq(tx_hash));
+    //     }
+
+    //     let db_logs: Vec<models::Log> = query.load::<models::Log>(conn)?;
+
+    //     let log_ids: Vec<i32> = db_logs.iter().filter_map(|log| log.id).collect();
+
+    //     let db_log_topics: Vec<models::LogTopic> = schema::log_topics::table
+    //         .filter(schema::log_topics::log_id.eq_any(log_ids))
+    //         .load::<models::LogTopic>(conn)?;
+
+    //     let mut logs: Vec<types::Log> = db_logs
+    //         .into_iter()
+    //         .map(|db_log| {
+    //             let topics: Vec<[u8; 32]> = db_log_topics
+    //                 .iter()
+    //                 .filter(|topic| {
+    //                     db_log
+    //                         .id
+    //                         .and_then(|i| (i == topic.log_id).then_some(i))
+    //                         .is_some()
+    //                 })
+    //                 .map(|topic| topic.topic.clone().try_into().unwrap())
+    //                 .collect();
+    //             let mut log: Result<types::Log, _> = db_log.try_into();
+    //             if let Ok(log) = &mut log {
+    //                 log.topics = topics;
+    //             }
+    //             log
+    //         })
+    //         .collect::<Result<Vec<types::Log>, _>>()?;
+
+    //     if !topics.is_empty() {
+    //         logs.retain(|log| {
+    //             topics.iter().all(|filter_topic| {
+    //                 log.topics
+    //                     .iter()
+    //                     .any(|log_topic| log_topic.as_slice() == *filter_topic)
+    //             })
+    //         });
+    //     }
+
+    //     Ok(logs)
+    // }
 
     pub fn insert_block(&mut self, info: &Info) -> anyhow::Result<()> {
         let conn = &mut self.conn;
@@ -209,6 +295,7 @@ mod tests {
             address: [4; 20],
             topics: vec![[5; 32], [6; 32]],
             data: vec![7; 32],
+            block_number: 1,
         };
         let log2 = Log {
             transaction_hash: Some([2; 32]),
@@ -216,6 +303,7 @@ mod tests {
             address: [8; 20],
             topics: vec![[9; 32]],
             data: vec![10; 32],
+            block_number: 1,
         };
         let log3 = Log {
             transaction_hash: Some([2; 32]),
@@ -223,6 +311,7 @@ mod tests {
             address: [11; 20],
             topics: vec![],
             data: vec![],
+            block_number: 1,
         };
 
         let log4 = Log {
@@ -231,6 +320,7 @@ mod tests {
             address: [12; 20],
             topics: vec![[13; 32]],
             data: vec![14; 32],
+            block_number: 1,
         };
         let log5 = Log {
             transaction_hash: Some([3; 32]),
@@ -238,6 +328,7 @@ mod tests {
             address: [15; 20],
             topics: vec![],
             data: vec![],
+            block_number: 1,
         };
         let log6 = Log {
             transaction_hash: Some([3; 32]),
@@ -245,6 +336,7 @@ mod tests {
             address: [16; 20],
             topics: vec![[17; 32], [18; 32], [19; 32]],
             data: vec![20; 32],
+            block_number: 1,
         };
         let log7 = Log {
             transaction_hash: Some([3; 32]),
@@ -252,6 +344,7 @@ mod tests {
             address: [21; 20],
             topics: vec![],
             data: vec![],
+            block_number: 1,
         };
 
         let mut info = Info {
