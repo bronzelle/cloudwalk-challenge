@@ -55,7 +55,7 @@ This file tracks the progress of the blockchain indexer project.
 
 - [x] Add instrumentation to key operations using `tracing`.
 - [ ] Implement a tracing backend (e.g., Jaeger, OpenTelemetry) to visualize traces.
-- [ ] Investigate and set up profiling tools (e.g., `pprof`, `flamegraph`) to identify performance bottlenecks.
+- [x] Investigate and set up profiling tools (e.g., `pprof`, `flamegraph`) to identify performance bottlenecks.
 
 ## Tasks out-of-scope
 
