@@ -138,13 +138,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_block_data() {
-        let provider = provider().await;
+        let provider = Arc::new(provider().await);
         let hash = b256!("0xe3d57e27e5300f22504990aec927d0cd055313adca707092ea34a557a0c501c7");
         let header = Header::<alloy::consensus::Header> {
             hash,
             ..Default::default()
         };
-        let info = get_block_info(&provider, header)
+        let info = get_block_info(Arc::clone(&provider), header)
             .await
             .expect("Block info retrieval failed");
         assert_eq!(info.block.hash, hash);

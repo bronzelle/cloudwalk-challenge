@@ -36,10 +36,10 @@ This file tracks the progress of the blockchain indexer project.
 
 ## Testing
 
-- [ ] Add unit tests for individual functions.
+- [x] Add unit tests for individual functions.
   - [x] `eth_client`: test retrieving information from a block.
   - [x] `db`: test inserting data into the database and querying it.
-  - [ ] `api`: test the API endpoints.
+  - [x] `api`: test the API endpoints.
 - [ ] Add integration tests for the end-to-end flow.
 
 ## Code Quality & Refinements

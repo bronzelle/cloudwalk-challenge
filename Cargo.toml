@@ -32,3 +32,4 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 [dev-dependencies]
 diesel_migrations = { version = "2.2.0" }
+reqwest = "0.12.22"

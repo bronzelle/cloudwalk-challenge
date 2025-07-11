@@ -1,12 +1,19 @@
 pub mod models;
 pub mod schema;
 
-use self::models::{DbBlock, DbTransaction, NewBalance, NewBlock, NewLog, NewLogTopic, NewReceipt, NewTransaction};
+use self::models::{
+    DbBlock, DbTransaction, NewBalance, NewBlock, NewLog, NewLogTopic, NewReceipt, NewTransaction,
+};
 use crate::types::{self, BlockSummary};
 use crate::types::{Block, Info, Log, Transaction};
 use diesel::define_sql_function;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
+#[cfg(test)]
+use diesel_migrations::{EmbeddedMigrations, embed_migrations};
+
+#[cfg(test)]
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 define_sql_function!(fn last_insert_rowid() -> BigInt);
 
@@ -275,39 +282,23 @@ impl Database {
     fn get_conn(&mut self) -> &mut SqliteConnection {
         &mut self.conn
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::types::{Balance, Block, Log, Receipt, Transaction};
-    use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
+    #[cfg(test)]
+    pub fn connect_test() -> Self {
+        use diesel_migrations::MigrationHarness;
 
-    pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
-
-    #[test]
-    fn test_insert_and_query_block() {
         let database_url = ":memory:";
         let mut db = Database::connect(&database_url).expect("Failed to connect to database");
         db.get_conn()
             .run_pending_migrations(MIGRATIONS)
             .expect("Failed to run migrations");
-
-        let info = data_setup();
-        db.insert_block(&info).expect("Insertion failed.");
-        let mut queried_info = db
-            .query_block_by_hash(&info.block.hash)
-            .expect("Query failed.");
-        queried_info
-            .logs
-            .sort_by_key(|log| (log.transaction_hash.clone(), log.log_index));
-
-        assert_eq!(info.block, queried_info.block);
-        assert_eq!(info.transactions, queried_info.transactions);
-        assert_eq!(info.logs, queried_info.logs);
+        db
     }
 
-    fn data_setup() -> BlockSummary {
+    #[cfg(test)]
+    pub fn data_setup() -> BlockSummary {
+        use crate::types::{Balance, Receipt};
+
         let block = Block {
             number: 1,
             hash: [1; 32],
@@ -421,5 +412,28 @@ mod tests {
             .sort_by_key(|log| (log.transaction_hash.clone(), log.log_index));
 
         block_summary
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_insert_and_query_block() {
+        let mut db = Database::connect_test();
+
+        let info = Database::data_setup();
+        db.insert_block(&info).expect("Insertion failed.");
+        let mut queried_info = db
+            .query_block_by_hash(&info.block.hash)
+            .expect("Query failed.");
+        queried_info
+            .logs
+            .sort_by_key(|log| (log.transaction_hash.clone(), log.log_index));
+
+        assert_eq!(info.block, queried_info.block);
+        assert_eq!(info.transactions, queried_info.transactions);
+        assert_eq!(info.logs, queried_info.logs);
     }
 }
