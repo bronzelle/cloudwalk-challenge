@@ -27,9 +27,12 @@ pub async fn connect(
 
     let provider = Arc::new(provider);
 
+    let (header_sender, mut header_receiver) = mpsc::channel(100);
+
+    let provider_clone_1 = Arc::clone(&provider);
     tokio::spawn(
         async move {
-            let sub = match provider.subscribe_blocks().await {
+            let sub = match provider_clone_1.subscribe_blocks().await {
                 Ok(sub) => sub,
                 Err(e) => {
                     tracing::error!("Failed to subscribe to blocks: {}", e);
@@ -38,27 +41,30 @@ pub async fn connect(
             };
             let mut stream = sub.into_stream();
             while let Some(header) = stream.next().await {
-                process_block(Arc::clone(&provider), header, sender.clone());
+                if header_sender.send(header).await.is_err() {
+                    tracing::error!("Failed to send header to processing channel");
+                    break;
+                }
             }
         }
         .instrument(tracing::info_span!("block_subscription_listener")),
     );
-    Ok(receiver)
-}
 
-#[tracing::instrument(skip(provider, sender))]
-fn process_block(
-    provider: Arc<DynProvider>,
-    header: Header,
-    sender: mpsc::Sender<anyhow::Result<BlockSummary>>,
-) {
-    tokio::spawn(async move {
-        let info = get_block_info(provider, header).await;
-        if sender.send(info).await.is_err() {
-            eprintln!("Receiver dropped. Stopping block listener.");
-            return;
+    let provider_clone_2 = Arc::clone(&provider);
+    tokio::spawn(
+        async move {
+            while let Some(header) = header_receiver.recv().await {
+                let info = get_block_info(Arc::clone(&provider_clone_2), header).await;
+                if sender.send(info).await.is_err() {
+                    eprintln!("Receiver dropped. Stopping block listener.");
+                    break;
+                }
+            }
         }
-    });
+        .instrument(tracing::info_span!("block_processing_thread")),
+    );
+
+    Ok(receiver)
 }
 
 #[tracing::instrument(skip(provider))]
