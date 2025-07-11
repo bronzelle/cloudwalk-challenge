@@ -48,8 +48,8 @@ mod tests {
                 database
             })
             .await;
-        let db = database.clone();
-        db
+        
+        database.clone()
     }
 
     #[tokio::test]

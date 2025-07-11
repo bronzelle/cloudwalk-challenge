@@ -236,7 +236,7 @@ impl Database {
                         .map(|(i, topic)| NewLogTopic {
                             log_id: last_id as i32,
                             topic_index: i as i32,
-                            topic: topic,
+                            topic,
                         })
                         .collect();
 
@@ -252,7 +252,7 @@ impl Database {
                 let new_balances: Vec<NewBalance> = info
                     .balances
                     .iter()
-                    .map(|balance| NewBalance::from(balance))
+                    .map(NewBalance::from)
                     .collect();
 
                 diesel::insert_into(schema::balances::table)
@@ -264,7 +264,7 @@ impl Database {
                 let new_receipts: Vec<NewReceipt> = info
                     .receipts
                     .iter()
-                    .map(|receipt| NewReceipt::from(receipt))
+                    .map(NewReceipt::from)
                     .collect();
 
                 diesel::insert_into(schema::receipts::table)
@@ -288,7 +288,7 @@ impl Database {
         use diesel_migrations::MigrationHarness;
 
         let database_url = ":memory:";
-        let mut db = Database::connect(&database_url).expect("Failed to connect to database");
+        let mut db = Database::connect(database_url).expect("Failed to connect to database");
         db.get_conn()
             .run_pending_migrations(MIGRATIONS)
             .expect("Failed to run migrations");
@@ -409,7 +409,7 @@ impl Database {
         };
         block_summary
             .logs
-            .sort_by_key(|log| (log.transaction_hash.clone(), log.log_index));
+            .sort_by_key(|log| (log.transaction_hash, log.log_index));
 
         block_summary
     }
@@ -430,7 +430,7 @@ mod tests {
             .expect("Query failed.");
         queried_info
             .logs
-            .sort_by_key(|log| (log.transaction_hash.clone(), log.log_index));
+            .sort_by_key(|log| (log.transaction_hash, log.log_index));
 
         assert_eq!(info.block, queried_info.block);
         assert_eq!(info.transactions, queried_info.transactions);

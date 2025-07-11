@@ -13,15 +13,14 @@ use crate::eth_client::{
 pub async fn parse_logs(logs: &Vec<Log>) -> ParsedData {
     let block_id = logs
         .first()
-        .map(|l| l.block_number)
-        .flatten()
+        .and_then(|l| l.block_number)
         .unwrap_or_default();
     let interactions = logs
         .into_par_iter()
         .fold(
-            || HashMap::<_, HashSet<_>>::new(),
+            HashMap::<_, HashSet<_>>::new,
             |mut acc, log| {
-                let ref mut interactions = acc;
+                let interactions = &mut acc;
 
                 let Ok(event) = IERC20::Transfer::decode_log(&log.inner) else {
                     return acc;
@@ -45,9 +44,9 @@ pub async fn parse_logs(logs: &Vec<Log>) -> ParsedData {
             },
         )
         .reduce(
-            || HashMap::new(),
+            HashMap::new,
             |mut total, partial| {
-                let ref mut t_interactions = total;
+                let t_interactions = &mut total;
                 let p_interactions = partial;
 
                 for (account, contracts) in p_interactions {

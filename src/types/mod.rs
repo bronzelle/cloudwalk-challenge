@@ -80,7 +80,7 @@ impl From<alloy_rpc_types_eth::Log> for Log {
     fn from(log: alloy_rpc_types_eth::Log) -> Self {
         let topics = log
             .topics()
-            .into_iter()
+            .iter()
             .map(|t| t.to_owned().into())
             .collect();
         Log {

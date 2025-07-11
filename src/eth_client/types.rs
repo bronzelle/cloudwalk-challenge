@@ -26,7 +26,7 @@ impl Balance {
         crate::types::Balance {
             account: self.account.into(),
             token: self.token.into(),
-            balance: self.balance.to_be_bytes().into(),
+            balance: self.balance.to_be_bytes(),
             block_id: self.block_id,
         }
     }

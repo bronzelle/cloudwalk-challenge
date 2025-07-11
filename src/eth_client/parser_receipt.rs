@@ -16,8 +16,7 @@ pub async fn parse_receipts(
 ) -> (ParsedData, Vec<Receipt>) {
     let block_id = receipts
         .first()
-        .map(|r| r.block_number)
-        .flatten()
+        .and_then(|r| r.block_number)
         .unwrap_or_default();
     let (receipts_summary, interactions) = transactions
         .into_par_iter()
@@ -43,7 +42,7 @@ pub async fn parse_receipts(
                 }
 
                 receipts_summary.push(Receipt {
-                    transaction_hash: tx.inner.hash().clone().into(),
+                    transaction_hash: (*tx.inner.hash()).into(),
                     gas_used: receipt.gas_used,
                 });
 

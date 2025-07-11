@@ -54,8 +54,7 @@ impl TryFrom<Log> for types::Log {
         Ok(types::Log {
             transaction_hash: log
                 .transaction_hash
-                .map(|hash| hash.try_into().ok())
-                .flatten(),
+                .and_then(|hash| hash.try_into().ok()),
             log_index: log.log_index.map(|index| index as u64),
             address: log
                 .address

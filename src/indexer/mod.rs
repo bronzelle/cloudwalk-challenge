@@ -25,15 +25,15 @@ pub async fn start(rpc: impl Into<String>, database_url: &str) -> anyhow::Result
                         .block
                         .hash
                         .iter()
-                        .map(|x| format!("{:02x}", x))
+                        .map(|x| format!("{x:02x}"))
                         .collect::<String>()
                 );
                 let result = database.lock().await.insert_block(&block);
                 if let Err(e) = result {
-                    eprintln!("Error inserting block into database: {}", e);
+                    eprintln!("Error inserting block into database: {e}");
                 }
             }
-            Err(e) => println!("Error receiving block: {}", e),
+            Err(e) => println!("Error receiving block: {e}"),
         }
     }
 

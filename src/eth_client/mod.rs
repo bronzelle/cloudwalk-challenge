@@ -115,7 +115,7 @@ async fn get_block_info(
             .iter()
             .map(|tx| {
                 // tx.
-                tx.inner.hash().clone().into()
+                (*tx.inner.hash()).into()
             })
             .collect(),
         balances: balances.into_iter().map(|b| b.into()).collect(),

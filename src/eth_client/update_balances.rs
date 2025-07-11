@@ -54,6 +54,6 @@ pub async fn get_balances(provider: Arc<DynProvider>, interaction: ParsedData) -
     join_all(balance_futures)
         .await
         .into_iter()
-        .filter_map(|b| b)
+        .flatten()
         .collect()
 }
