@@ -46,7 +46,7 @@ This file tracks the progress of the blockchain indexer project.
 
 - [x] Use `tokio` for asynchronous operations.
 - [x] Use `anyhow` for error handling.
-- [ ] Implement CI process.
+- [x] Implement CI process.
 - [ ] Implement more robust error handling and retries for network operations.
 - [ ] Add comprehensive logging throughout the application.
 - [ ] Structure the project into logical modules.
