@@ -47,14 +47,15 @@ This file tracks the progress of the blockchain indexer project.
 - [x] Use `tokio` for asynchronous operations.
 - [x] Use `anyhow` for error handling.
 - [x] Implement CI process.
+- [x] Add comprehensive logging throughout the application using the `tracing` crate.
 - [ ] Implement more robust error handling and retries for network operations.
-- [ ] Add comprehensive logging throughout the application.
 - [ ] Structure the project into logical modules.
 
 ## Performance & Instrumentation
 
-- [ ] Add instrumentation to measure performance of key operations.
-- [ ] Set up benchmarks for performance testing.
+- [x] Add instrumentation to key operations using `tracing`.
+- [ ] Implement a tracing backend (e.g., Jaeger, OpenTelemetry) to visualize traces.
+- [ ] Investigate and set up profiling tools (e.g., `pprof`, `flamegraph`) to identify performance bottlenecks.
 
 ## Tasks out-of-scope
 

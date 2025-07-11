@@ -9,6 +9,7 @@ use crate::eth_client::{
     types::{KNOWN_TOKENS, ParsedData},
 };
 
+#[tracing::instrument(skip(logs))]
 pub async fn parse_logs(logs: &Vec<Log>) -> ParsedData {
     let block_id = logs
         .first()

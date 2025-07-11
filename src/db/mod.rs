@@ -15,11 +15,13 @@ pub struct Database {
 }
 
 impl Database {
+    #[tracing::instrument(skip(database_url))]
     pub fn connect(database_url: &str) -> anyhow::Result<Self> {
         let conn = SqliteConnection::establish(database_url)?;
         Ok(Self { conn })
     }
 
+    #[tracing::instrument(skip(conn))]
     fn get_block_info(
         conn: &mut SqliteConnection,
         db_block: DbBlock,
@@ -82,6 +84,7 @@ impl Database {
         })
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn query_block_by_number(&mut self, number: u64) -> anyhow::Result<Info> {
         let conn = &mut self.conn;
         let db_block: DbBlock = schema::blocks::table
@@ -92,6 +95,7 @@ impl Database {
         Self::get_block_info(conn, db_block)
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn query_block_by_hash(&mut self, hash: &[u8]) -> anyhow::Result<Info> {
         let conn = &mut self.conn;
         let db_block: DbBlock = schema::blocks::table
@@ -102,6 +106,7 @@ impl Database {
         Self::get_block_info(conn, db_block)
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn query_transaction_by_hash(&mut self, hash: &[u8]) -> anyhow::Result<types::Transaction> {
         let conn = &mut self.conn;
         let db_tx: DbTransaction = schema::transactions::table
@@ -175,6 +180,7 @@ impl Database {
     //     Ok(logs)
     // }
 
+    #[tracing::instrument(skip(self, info))]
     pub fn insert_block(&mut self, info: &BlockSummary) -> anyhow::Result<()> {
         let conn = &mut self.conn;
         conn.transaction(|conn| -> diesel::result::QueryResult<()> {

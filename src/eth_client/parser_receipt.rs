@@ -9,6 +9,7 @@ use crate::{eth_client::types::ParsedData, types::Receipt};
 /// Parses a vector of transaction receipts in parallel to extract key information.
 /// This functions gets all the Transfer events which is used for get token transactions.
 /// It does a summary of the receipt to store it in the DB.
+#[tracing::instrument(skip(receipts, transactions))]
 pub async fn parse_receipts(
     receipts: &Vec<TransactionReceipt>,
     transactions: &Vec<Transaction>,

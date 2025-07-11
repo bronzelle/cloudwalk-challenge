@@ -2,13 +2,14 @@ use std::{pin::Pin, sync::Arc};
 
 use alloy::primitives::Address;
 use alloy_provider::{DynProvider, Provider};
-use futures::future::join_all;
+use futures::{future::join_all, Future};
 
 use crate::eth_client::{
     contracts::erc20::IERC20,
     types::{Balance, ParsedData},
 };
 
+#[tracing::instrument(skip(provider, interaction))]
 pub async fn get_balances(provider: Arc<DynProvider>, interaction: ParsedData) -> Vec<Balance> {
     let mut balance_futures: Vec<Pin<Box<dyn Future<Output = Option<Balance>> + Send>>> =
         Vec::new();

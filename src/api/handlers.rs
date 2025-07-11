@@ -11,6 +11,7 @@ use crate::{
     types::Info,
 };
 
+#[tracing::instrument(skip(db))]
 pub async fn get_block_by_number(
     Path(number): Path<u64>,
     State(db): State<Arc<Mutex<Database>>>,
@@ -22,6 +23,7 @@ pub async fn get_block_by_number(
     }
 }
 
+#[tracing::instrument(skip(db))]
 pub async fn get_block_by_hash(
     Path(hash): Path<String>,
     State(db): State<Arc<Mutex<Database>>>,
@@ -36,6 +38,7 @@ pub async fn get_block_by_hash(
     }
 }
 
+#[tracing::instrument(skip(db))]
 pub async fn get_transaction_by_hash(
     Path(hash): Path<String>,
     State(db): State<Arc<Mutex<Database>>>,

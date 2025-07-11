@@ -6,6 +6,7 @@ use axum::{routing::get, Router};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+#[tracing::instrument(skip(db))]
 pub async fn run_api(db: Arc<Mutex<Database>>) {
     let app = Router::new()
         .route("/blocks/{number}", get(handlers::get_block_by_number))

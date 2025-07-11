@@ -4,6 +4,7 @@ use tokio::sync::Mutex;
 
 use crate::{api, db::Database, eth_client};
 
+#[tracing::instrument(skip(rpc, database_url))]
 pub async fn start(rpc: impl Into<String>, database_url: &str) -> anyhow::Result<()> {
     let database = Arc::new(Mutex::new(Database::connect(database_url)?));
 

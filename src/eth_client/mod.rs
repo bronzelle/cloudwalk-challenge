@@ -10,9 +10,11 @@ use alloy_provider::{DynProvider, Provider, ProviderBuilder, WsConnect};
 use alloy_rpc_types_eth::{BlockId, BlockNumberOrTag, BlockTransactions, Filter, Header};
 use futures_util::StreamExt;
 use tokio::sync::mpsc::{self, Receiver};
+use tracing::Instrument;
 
 use crate::{eth_client::update_balances::get_balances, types::BlockSummary};
 
+#[tracing::instrument(skip(rpc))]
 pub async fn connect(
     rpc: impl Into<String>,
 ) -> anyhow::Result<Receiver<anyhow::Result<BlockSummary>>> {
@@ -25,22 +27,26 @@ pub async fn connect(
 
     let provider = Arc::new(provider);
 
-    tokio::spawn(async move {
-        let sub = match provider.subscribe_blocks().await {
-            Ok(sub) => sub,
-            Err(e) => {
-                eprintln!("Failed to subscribe to blocks: {}", e);
-                return;
+    tokio::spawn(
+        async move {
+            let sub = match provider.subscribe_blocks().await {
+                Ok(sub) => sub,
+                Err(e) => {
+                    tracing::error!("Failed to subscribe to blocks: {}", e);
+                    return;
+                }
+            };
+            let mut stream = sub.into_stream();
+            while let Some(header) = stream.next().await {
+                process_block(Arc::clone(&provider), header, sender.clone());
             }
-        };
-        let mut stream = sub.into_stream();
-        while let Some(header) = stream.next().await {
-            process_block(Arc::clone(&provider), header, sender.clone());
         }
-    });
+        .instrument(tracing::info_span!("block_subscription_listener")),
+    );
     Ok(receiver)
 }
 
+#[tracing::instrument(skip(provider, sender))]
 fn process_block(
     provider: Arc<DynProvider>,
     header: Header,
@@ -55,6 +61,7 @@ fn process_block(
     });
 }
 
+#[tracing::instrument(skip(provider))]
 async fn get_block_info(
     provider: Arc<DynProvider>,
     header: Header,
