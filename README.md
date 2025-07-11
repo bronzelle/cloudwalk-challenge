@@ -13,3 +13,5 @@ Set DATABASE_URL enviroment variable with the address of the SQLite database the
 diesel setup
 diesel migrations run
 ```
+
+https://inloop.github.io/sqlite-viewer/

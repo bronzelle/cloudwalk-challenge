@@ -2,7 +2,7 @@ pub mod models;
 pub mod schema;
 
 use self::models::{DbBlock, DbTransaction, NewBlock, NewLog, NewLogTopic, NewTransaction};
-use crate::types;
+use crate::types::{self, BlockSummary};
 use crate::types::{Block, Info, Log, Transaction};
 use diesel::define_sql_function;
 use diesel::prelude::*;
@@ -175,7 +175,7 @@ impl Database {
     //     Ok(logs)
     // }
 
-    pub fn insert_block(&mut self, info: &Info) -> anyhow::Result<()> {
+    pub fn insert_block(&mut self, info: &BlockSummary) -> anyhow::Result<()> {
         let conn = &mut self.conn;
         conn.transaction(|conn| -> diesel::result::QueryResult<()> {
             let new_block = NewBlock::from(&info.block);
@@ -251,7 +251,7 @@ impl Database {
 mod tests {
     use super::*;
     use crate::types::{Block, Log, Transaction};
-    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+    use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
     pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 

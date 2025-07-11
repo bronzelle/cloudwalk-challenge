@@ -1,17 +1,29 @@
+mod contracts;
+mod parser_log;
+mod parser_receipt;
+mod types;
+pub mod update_balances;
+
+use std::sync::Arc;
+
 use alloy_provider::{DynProvider, Provider, ProviderBuilder, WsConnect};
-use alloy_rpc_types_eth::{BlockTransactions, Filter, Header};
+use alloy_rpc_types_eth::{BlockId, BlockNumberOrTag, BlockTransactions, Filter, Header};
 use futures_util::StreamExt;
 use tokio::sync::mpsc::{self, Receiver};
 
-use crate::types::Info;
+use crate::{eth_client::update_balances::get_balances, types::BlockSummary};
 
-pub async fn connect(rpc: impl Into<String>) -> anyhow::Result<Receiver<anyhow::Result<Info>>> {
+pub async fn connect(
+    rpc: impl Into<String>,
+) -> anyhow::Result<Receiver<anyhow::Result<BlockSummary>>> {
     let provider = ProviderBuilder::new()
         .connect_ws(WsConnect::new(rpc))
         .await?
         .erased();
 
     let (sender, receiver) = mpsc::channel(100);
+
+    let provider = Arc::new(provider);
 
     tokio::spawn(async move {
         let sub = match provider.subscribe_blocks().await {
@@ -23,40 +35,78 @@ pub async fn connect(rpc: impl Into<String>) -> anyhow::Result<Receiver<anyhow::
         };
         let mut stream = sub.into_stream();
         while let Some(header) = stream.next().await {
-            let info = get_block_info(&provider, header).await;
-            if sender.send(info).await.is_err() {
-                eprintln!("Receiver dropped. Stopping block listener.");
-                break;
-            }
+            process_block(Arc::clone(&provider), header, sender.clone());
         }
     });
     Ok(receiver)
 }
 
-async fn get_block_info(provider: &DynProvider, header: Header) -> anyhow::Result<Info> {
+fn process_block(
+    provider: Arc<DynProvider>,
+    header: Header,
+    sender: mpsc::Sender<anyhow::Result<BlockSummary>>,
+) {
+    tokio::spawn(async move {
+        let info = get_block_info(provider, header).await;
+        if sender.send(info).await.is_err() {
+            eprintln!("Receiver dropped. Stopping block listener.");
+            return;
+        }
+    });
+}
+
+async fn get_block_info(
+    provider: Arc<DynProvider>,
+    header: Header,
+) -> anyhow::Result<BlockSummary> {
     let filter = Filter::new().at_block_hash(header.hash);
-    let (block_result, logs_result) = tokio::join!(
-        provider.get_block_by_hash(header.hash).hashes(),
-        provider.get_logs(&filter)
+    let block_id = BlockId::Number(BlockNumberOrTag::Number(header.number));
+    let (block_result, logs_result, receipts_result) = tokio::join!(
+        provider.get_block_by_hash(header.hash).full(),
+        provider.get_logs(&filter),
+        provider.get_block_receipts(block_id),
     );
 
-    let (block, logs) = (
+    let (block, logs, receipts) = (
         block_result?.ok_or_else(|| anyhow::anyhow!("Block not found"))?,
         logs_result?,
+        receipts_result?,
     );
 
     let transactions = match block.transactions {
-        BlockTransactions::Hashes(transactions) => Ok(transactions),
+        BlockTransactions::Full(transactions) => Ok(transactions),
         _ => Err(anyhow::anyhow!("Block transactions are not full")),
     }?;
 
-    Ok(Info {
+    let receipts = receipts.ok_or_else(|| anyhow::anyhow!("Receipts not found"))?;
+
+    let (mut logs_accounts, (transactions_accounts, receipts)) = tokio::join!(
+        parser_log::parse_logs(&logs),
+        parser_receipt::parse_receipts(&receipts, &transactions),
+    );
+
+    for (account, contracts) in transactions_accounts.interactions {
+        logs_accounts
+            .interactions
+            .entry(account)
+            .or_default()
+            .extend(contracts);
+    }
+
+    let balances = get_balances(provider, logs_accounts).await;
+
+    Ok(BlockSummary {
         block: header.into(),
         logs: logs.iter().map(|log| log.clone().into()).collect(),
         transactions: transactions
             .iter()
-            .map(|hash| hash.clone().into())
+            .map(|tx| {
+                // tx.
+                tx.inner.hash().clone().into()
+            })
             .collect(),
+        balances: balances.into_iter().map(|b| b.into()).collect(),
+        receipts,
     })
 }
 

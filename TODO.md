@@ -9,7 +9,7 @@ This file tracks the progress of the blockchain indexer project.
 - [x] For each new block, fetch the full block data.
 - [x] For each new block, fetch all associated logs.
 - [x] Extract transactions from each block.
-- [ ] Extract receipts from each transaction.
+- [x] Extract receipts from each transaction.
 - [x] Store block information in a database.
 - [x] Store transaction information in a database.
 - [x] Store log information in a database.
@@ -22,16 +22,17 @@ This file tracks the progress of the blockchain indexer project.
 
 ## API (Bonus)
 
-- [ ] Retrieve `accounts` information (native asset balance).
+- [x] Retrieve `accounts` information (native asset balance).
 - [ ] Create an `accounts` table to track native asset (Ether) balances.
-- [ ] Retrieve `token_transfers`.
+- [x] Retrieve `token_transfers`.
 - [ ] Create a `token_transfers` table for ERC-20/721 events.
-- [ ] Retrieve `token_balances` for ERC-20/721 holdings.
+- [x] Retrieve `token_balances` for ERC-20/721 holdings.
 - [ ] Create a `token_balances` table for ERC-20/721 holdings.
 - [ ] Design and implement a simple HTTP API to query the indexed data.
   - [x] Add endpoints to get a block by number or hash.
   - [x] Add endpoints to get a transaction by hash.
   - [ ] Add endpoints to get logs with filtering options.
+  - [ ] Adapt the endpoint to follow the Ethereum JSON-RPC API standard.
 
 ## Testing
 
@@ -54,3 +55,7 @@ This file tracks the progress of the blockchain indexer project.
 
 - [ ] Add instrumentation to measure performance of key operations.
 - [ ] Set up benchmarks for performance testing.
+
+## Tasks out-of-scope
+
+- Getting internal transactions for the native token.

@@ -1,10 +1,33 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BlockSummary {
+    pub block: Block,
+    pub transactions: Vec<Transaction>,
+    pub logs: Vec<Log>,
+    pub balances: Vec<Balance>,
+    pub receipts: Vec<Receipt>,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Info {
     pub block: Block,
     pub transactions: Vec<Transaction>,
     pub logs: Vec<Log>,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Balance {
+    pub account: [u8; 20],
+    pub token: [u8; 20],
+    pub balance: [u8; 32],
+    pub block_id: u64,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Receipt {
+    pub transaction_hash: [u8; 32],
+    pub gas_used: u64,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
