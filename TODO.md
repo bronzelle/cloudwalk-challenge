@@ -49,7 +49,7 @@ This file tracks the progress of the blockchain indexer project.
 - [x] Implement CI process.
 - [x] Add comprehensive logging throughout the application using the `tracing` crate.
 - [ ] Implement more robust error handling and retries for network operations.
-- [ ] Structure the project into logical modules.
+- [x] Structure the project into logical modules.
 
 ## Performance & Instrumentation
 
