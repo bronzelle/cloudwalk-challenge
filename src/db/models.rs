@@ -1,4 +1,4 @@
-use crate::db::schema::{blocks, log_topics, logs, transactions};
+use crate::db::schema::{balances, blocks, log_topics, logs, receipts, transactions};
 use crate::types;
 
 use diesel::prelude::*;
@@ -143,5 +143,41 @@ impl TryFrom<DbTransaction> for types::Transaction {
                 .try_into()
                 .map_err(|_| anyhow::anyhow!("Invalid hash"))?,
         })
+    }
+}
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = balances)]
+pub struct NewBalance<'a> {
+    pub account: &'a [u8],
+    pub token: &'a [u8],
+    pub balance: &'a [u8],
+    pub block_id: i64,
+}
+
+impl<'a> From<&'a types::Balance> for NewBalance<'a> {
+    fn from(balance: &'a types::Balance) -> Self {
+        NewBalance {
+            account: &balance.account,
+            token: &balance.token,
+            balance: &balance.balance,
+            block_id: balance.block_id as i64,
+        }
+    }
+}
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = receipts)]
+pub struct NewReceipt<'a> {
+    pub transaction_hash: &'a [u8],
+    pub gas_used: i64,
+}
+
+impl<'a> From<&'a types::Receipt> for NewReceipt<'a> {
+    fn from(receipt: &'a types::Receipt) -> Self {
+        NewReceipt {
+            transaction_hash: &receipt.transaction_hash,
+            gas_used: receipt.gas_used as i64,
+        }
     }
 }

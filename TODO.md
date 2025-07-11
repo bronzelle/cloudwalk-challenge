@@ -23,11 +23,11 @@ This file tracks the progress of the blockchain indexer project.
 ## API (Bonus)
 
 - [x] Retrieve `accounts` information (native asset balance).
-- [ ] Create an `accounts` table to track native asset (Ether) balances.
+- [x] Create an `accounts` table to track native asset (Ether) balances.
 - [x] Retrieve `token_transfers`.
-- [ ] Create a `token_transfers` table for ERC-20/721 events.
+- [x] Create a `token_transfers` table for ERC-20/721 events.
 - [x] Retrieve `token_balances` for ERC-20/721 holdings.
-- [ ] Create a `token_balances` table for ERC-20/721 holdings.
+- [x] Create a `token_balances` table for ERC-20/721 holdings.
 - [ ] Design and implement a simple HTTP API to query the indexed data.
   - [x] Add endpoints to get a block by number or hash.
   - [x] Add endpoints to get a transaction by hash.

@@ -1,7 +1,7 @@
 pub mod models;
 pub mod schema;
 
-use self::models::{DbBlock, DbTransaction, NewBlock, NewLog, NewLogTopic, NewTransaction};
+use self::models::{DbBlock, DbTransaction, NewBalance, NewBlock, NewLog, NewLogTopic, NewReceipt, NewTransaction};
 use crate::types::{self, BlockSummary};
 use crate::types::{Block, Info, Log, Transaction};
 use diesel::define_sql_function;
@@ -235,6 +235,30 @@ impl Database {
                     .execute(conn)?;
             }
 
+            if !info.balances.is_empty() {
+                let new_balances: Vec<NewBalance> = info
+                    .balances
+                    .iter()
+                    .map(|balance| NewBalance::from(balance))
+                    .collect();
+
+                diesel::insert_into(schema::balances::table)
+                    .values(&new_balances)
+                    .execute(conn)?;
+            }
+
+            if !info.receipts.is_empty() {
+                let new_receipts: Vec<NewReceipt> = info
+                    .receipts
+                    .iter()
+                    .map(|receipt| NewReceipt::from(receipt))
+                    .collect();
+
+                diesel::insert_into(schema::receipts::table)
+                    .values(&new_receipts)
+                    .execute(conn)?;
+            }
+
             Ok(())
         })?;
 
@@ -250,7 +274,7 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Block, Log, Transaction};
+    use crate::types::{Balance, Block, Log, Receipt, Transaction};
     use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
     pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
@@ -272,10 +296,12 @@ mod tests {
             .logs
             .sort_by_key(|log| (log.transaction_hash.clone(), log.log_index));
 
-        assert_eq!(info, queried_info);
+        assert_eq!(info.block, queried_info.block);
+        assert_eq!(info.transactions, queried_info.transactions);
+        assert_eq!(info.logs, queried_info.logs);
     }
 
-    fn data_setup() -> Info {
+    fn data_setup() -> BlockSummary {
         let block = Block {
             number: 1,
             hash: [1; 32],
@@ -347,7 +373,29 @@ mod tests {
             block_number: 1,
         };
 
-        let mut info = Info {
+        let balance1 = Balance {
+            account: [1; 20],
+            token: [2; 20],
+            balance: [3; 32],
+            block_id: 1,
+        };
+        let balance2 = Balance {
+            account: [4; 20],
+            token: [5; 20],
+            balance: [6; 32],
+            block_id: 1,
+        };
+
+        let receipt1 = Receipt {
+            transaction_hash: [2; 32],
+            gas_used: 21000,
+        };
+        let receipt2 = Receipt {
+            transaction_hash: [3; 32],
+            gas_used: 30000,
+        };
+
+        let mut block_summary = BlockSummary {
             block: block.clone(),
             transactions: vec![tx1.clone(), tx2.clone()],
             logs: vec![
@@ -359,10 +407,13 @@ mod tests {
                 log6.clone(),
                 log7.clone(),
             ],
+            balances: vec![balance1.clone(), balance2.clone()],
+            receipts: vec![receipt1.clone(), receipt2.clone()],
         };
-        info.logs
+        block_summary
+            .logs
             .sort_by_key(|log| (log.transaction_hash.clone(), log.log_index));
 
-        info
+        block_summary
     }
 }

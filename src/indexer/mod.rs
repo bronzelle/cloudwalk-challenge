@@ -27,7 +27,6 @@ pub async fn start(rpc: impl Into<String>, database_url: &str) -> anyhow::Result
                         .map(|x| format!("{:02x}", x))
                         .collect::<String>()
                 );
-                println!("Block: {:#?}", block.balances);
                 let result = database.lock().await.insert_block(&block);
                 if let Err(e) = result {
                     eprintln!("Error inserting block into database: {}", e);
