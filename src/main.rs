@@ -1,6 +1,6 @@
 #[cfg(feature = "profiling")]
 use chrono::Utc;
-use std::{env};
+use std::env;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 pub mod api;
@@ -30,7 +30,7 @@ fn start_profiling() -> pprof::Result<()> {
             let filename = format!("{}/{}-flamegraph.svg", report_dir, timestamp);
 
             match guard.report().build() {
-                Ok(report) => match fs::File::create(&filename) {
+                Ok(report) => match std::fs::File::create(&filename) {
                     Ok(mut file) => {
                         if let Err(e) = report.flamegraph(&mut file) {
                             tracing::error!("Failed to write flamegraph to file: {}", e);
